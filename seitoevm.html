@@ -55,8 +55,7 @@
             const apiUrl = "https://seitrace.com/pacific-1/gateway/api/v1/addresses/";
 
             try {
-                const evmHashes = [];
-                for (const seiAddress of seiAddresses) {
+                const fetchPromises = seiAddresses.map(async (seiAddress) => {
                     try {
                         const response = await fetch(apiUrl + seiAddress);
                         if (!response.ok) {
@@ -65,13 +64,15 @@
                         const data = await response.json();
                         const evmHash = data.association.evm_hash;
                         if (evmHash && evmHash.startsWith("0x")) {
-                            evmHashes.push(`SEI Address: ${seiAddress} - EVM Hash: ${evmHash}`);
+                            return `SEI Address: ${seiAddress} - EVM Hash: ${evmHash}`;
                         }
                     } catch (error) {
                         console.error('Error fetching data:', error);
                     }
-                }
-                document.getElementById("evmHashesContainer").innerText = evmHashes.join("\n");
+                });
+
+                const evmHashes = await Promise.all(fetchPromises);
+                document.getElementById("evmHashesContainer").innerText = evmHashes.filter(Boolean).join("\n");
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById("evmHashesContainer").innerText = "Error converting SEI to EVM hashes.";
